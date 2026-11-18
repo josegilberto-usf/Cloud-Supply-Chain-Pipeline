@@ -1,25 +1,45 @@
-# 📦 Cloud-Based Supply Chain Analytics Pipeline
+# Cloud-Based Supply Chain Analytics Pipeline
 
 ## Overview
-Modern supply chains generate massive amounts of data that often sit siloed in cloud storage. Without automated pipelines, businesses struggle to identify stock-out risks and procurement inefficiencies in real-time.
+Warehouses need to know which products are about to run out so they can reorder in time. This project builds a small end-to-end pipeline that loads inventory data into a cloud database and uses SQL to flag and rank the most urgent restocks at each warehouse.
 
-This project simulates an **Enterprise ETL (Extract, Transform, Load) Pipeline**. It automates the movement of inventory data from cloud storage into a relational database, where advanced SQL analytics are applied to identify critical supply chain vulnerabilities and cost-saving opportunities.
+The inventory data is simulated, so the project can be run by anyone without access to real company data.
 
-## 🛠️ Tech Stack
-* **Database:** PostgreSQL (Cloud Instance)
-* **Language:** Python
-* **ORM & Connectivity:** SQLAlchemy
-* **Cloud Storage Simulation:** AWS S3 (Simulated local-to-cloud ingestion)
-* **Data Analysis:** Advanced SQL (CTEs, Window Functions)
+## How It Works
+1. **Generate and load the data (`data_pipeline.py`)**
+   - Creates 10,000 simulated inventory records using Python and the Faker library.
+   - Each record includes an item ID, product name, category, warehouse location, current stock level, reorder point and unit price.
+   - Covers five warehouses: Tampa, Orlando, Miami, Jacksonville and Atlanta.
+   - Loads the records into a cloud-hosted PostgreSQL database (Neon) as an `inventory` table using pandas and SQLAlchemy.
 
-## 🚀 Key Features
-1. [cite_start]**Automated ETL Pipeline:** Architected a Python-based script to extract 10,000+ simulated inventory records and automate ingestion into a live PostgreSQL database using SQLAlchemy. [cite: 53]
-2. [cite_start]**Cloud Integration:** Simulates the extraction of raw data from AWS S3 storage buckets, reflecting industry-standard data engineering workflows. [cite: 53]
-3. [cite_start]**Advanced SQL Analytics:** Developed complex queries utilizing **Common Table Expressions (CTEs)** and **Window Functions** to perform multi-level ranking of stock-out risks. [cite: 54]
-4. [cite_start]**Actionable Business Intelligence:** Transforms raw data into procurement metrics, identifying simulated cost-saving opportunities across multiple distribution centers. [cite: 16, 54]
+2. **Analyze stock-out risk (`analyze_inventory.py`)**
+   - Runs a SQL query that finds every item whose stock level is below its reorder point and calculates how far short it is (the deficit).
+   - Ranks those shortages within each warehouse, so the largest shortage at each location is ranked #1.
+   - Prints the most critical shortages (deficit over 100 units) and the top-priority restock for each warehouse.
 
-## 💻 How to Run Locally
-1. Clone this repository to your local machine.
-2. Install the required dependencies:
+## Tech Stack
+- **Python:** pandas, SQLAlchemy, Faker
+- **Database:** PostgreSQL (hosted on Neon)
+- **SQL techniques:** a Common Table Expression (CTE) to isolate low-stock items, and the `RANK()` window function to rank shortages within each warehouse
+
+## Example Business Question Answered
+> "For each of our warehouses, which product should we reorder first?"
+
+## How to Run Locally
+1. Clone this repository.
+2. Install the dependencies:
    ```bash
-   pip install sqlalchemy psycopg2 pandas
+   pip install pandas sqlalchemy psycopg2-binary faker
+   ```
+3. Create a free PostgreSQL database (for example on [Neon](https://neon.tech)) and copy its connection string.
+4. In both `data_pipeline.py` and `analyze_inventory.py`, replace `DB_URL_HERE` with your connection string. Don't commit your real connection string to GitHub.
+5. Load the data, then run the analysis:
+   ```bash
+   python data_pipeline.py
+   python analyze_inventory.py
+   ```
+
+## Possible Next Steps
+- Read the source data from a real cloud storage bucket (such as AWS S3) instead of generating it.
+- Add a dashboard (Tableau or Power BI) on top of the `inventory` table.
+- Estimate the dollar value of each shortage using `unit_price`.
